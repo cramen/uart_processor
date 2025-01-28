@@ -1,5 +1,5 @@
 ## Description
-Simple library for uart data processing
+Simple library for uart data processing for arduino
 
 ## Usage example
 ```c
