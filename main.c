@@ -5,16 +5,21 @@
 UARTProcessor uart0Processor;
 UARTProcessor uart1Processor;
 
-// Конфигурация Serial2
-Serial2Config serial2Config = { &Serial2, 9600 };
+// Колбэк-функция для обработки данных
+void handleData(const char *data, const char *prefix) {
+    // Выводим данные в Serial2
+    Serial2.print(prefix);
+    Serial2.print(": ");
+    Serial2.println(data);
+}
 
 void setup() {
-    // Инициализация UART0 и UART1
-    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, &serial2Config);
-    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, &serial2Config);
+    // Инициализация Serial2
+    Serial2.begin(9600);
 
-    UARTProcessor_Begin(&uart0Processor);
-    UARTProcessor_Begin(&uart1Processor);
+    // Инициализация UART0 и UART1
+    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, handleData);
+    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, handleData);
 }
 
 void loop() {

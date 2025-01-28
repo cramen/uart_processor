@@ -9,14 +9,16 @@ Simple library for uart data processing
 UARTProcessor uart0Processor;
 UARTProcessor uart1Processor;
 
-Serial2Config serial2Config = { &Serial2, 9600 };
+void handleData(const char *data, const char *prefix) {
+    Serial2.print(prefix);
+    Serial2.print(": ");
+    Serial2.println(data);
+}
 
 void setup() {
-    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, &serial2Config);
-    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, &serial2Config);
-
-    UARTProcessor_Begin(&uart0Processor);
-    UARTProcessor_Begin(&uart1Processor);
+    Serial2.begin(9600);
+    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, handleData);
+    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, handleData);
 }
 
 void loop() {
