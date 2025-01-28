@@ -1,13 +1,39 @@
 #include "uart_processor.h"
 
 // Инициализация UARTProcessor
-void UARTProcessor_Init(UARTProcessor *processor, HardwareSerial *uart, const char *prefix, char lineEnding, uint32_t baudRate, DataCallback callback) {
+bool UARTProcessor_Init(UARTProcessor *processor, HardwareSerial *uart, const char *prefix, char lineEnding, uint32_t baudRate, uint16_t bufferSize, DataCallback callback) {
+    // Проверка на минимальный размер буфера
+    if (bufferSize < 1) {
+        return false; // Некорректный размер буфера
+    }
+
+    // Выделение памяти под буфер
+    processor->buffer = (char *)malloc(bufferSize);
+    if (!processor->buffer) {
+        return false; // Ошибка выделения памяти
+    }
+
     processor->uart = uart;
     processor->prefix = prefix;
     processor->lineEnding = lineEnding;
     processor->baudRate = baudRate;
+    processor->bufferSize = bufferSize;
     processor->index = 0;
     processor->callback = callback;
+
+    return true;
+}
+
+// Освобождение ресурсов UARTProcessor
+void UARTProcessor_Destroy(UARTProcessor *processor) {
+    if (processor->buffer) {
+        free(processor->buffer); // Освобождаем память
+        processor->buffer = NULL;
+    }
+}
+
+// Инициализация UART
+void UARTProcessor_Begin(UARTProcessor *processor) {
     if (processor->uart) {
         processor->uart->begin(processor->baudRate);
     }
@@ -15,7 +41,7 @@ void UARTProcessor_Init(UARTProcessor *processor, HardwareSerial *uart, const ch
 
 // Обработка данных
 void UARTProcessor_Process(UARTProcessor *processor) {
-    if (!processor->uart || !processor->callback) {
+    if (!processor->uart || !processor->callback || !processor->buffer) {
         return; // Проверка на корректность указателей
     }
 
@@ -28,7 +54,7 @@ void UARTProcessor_Process(UARTProcessor *processor) {
                 processor->index = 0;  // Сбрасываем индекс буфера
             }
         } else {
-            if (processor->index < DEFAULT_BUFFER_SIZE - 1) {
+            if (processor->index < processor->bufferSize - 1) {
                 processor->buffer[processor->index++] = c;  // Добавляем символ в буфер
             } else {
                 // Обработка переполнения буфера

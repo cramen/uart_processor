@@ -17,9 +17,16 @@ void setup() {
     // Инициализация Serial2
     Serial2.begin(9600);
 
-    // Инициализация UART0 и UART1
-    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, handleData);
-    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, handleData);
+    // Инициализация UART0 и UART1 с настраиваемым размером буфера
+    if (!UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, 256, handleData)) {
+        Serial2.println("Failed to initialize UART0!");
+    }
+    if (!UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, 512, handleData)) {
+        Serial2.println("Failed to initialize UART1!");
+    }
+
+    UARTProcessor_Begin(&uart0Processor);
+    UARTProcessor_Begin(&uart1Processor);
 }
 
 void loop() {
@@ -28,4 +35,10 @@ void loop() {
 
     // Обработка данных с UART1
     UARTProcessor_Process(&uart1Processor);
+}
+
+void onDestroy() {
+    // Освобождение ресурсов
+    UARTProcessor_Destroy(&uart0Processor);
+    UARTProcessor_Destroy(&uart1Processor);
 }

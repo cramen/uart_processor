@@ -17,12 +17,25 @@ void handleData(const char *data, const char *prefix) {
 
 void setup() {
     Serial2.begin(9600);
-    UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, handleData);
-    UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, handleData);
+
+    if (!UARTProcessor_Init(&uart0Processor, &Serial, "Rx", '\r', 9600, 256, handleData)) {
+        Serial2.println("Failed to initialize UART0!");
+    }
+    if (!UARTProcessor_Init(&uart1Processor, &Serial1, "Tx", '\r', 9600, 512, handleData)) {
+        Serial2.println("Failed to initialize UART1!");
+    }
+
+    UARTProcessor_Begin(&uart0Processor);
+    UARTProcessor_Begin(&uart1Processor);
 }
 
 void loop() {
     UARTProcessor_Process(&uart0Processor);
     UARTProcessor_Process(&uart1Processor);
+}
+
+void onDestroy() {
+    UARTProcessor_Destroy(&uart0Processor);
+    UARTProcessor_Destroy(&uart1Processor);
 }
 ```
