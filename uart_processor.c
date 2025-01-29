@@ -39,6 +39,13 @@ void UARTProcessor_Begin(UARTProcessor *processor) {
     }
 }
 
+// Вспомогательная функция для завершения строки и вызова колбэка
+static void _processBuffer(UARTProcessor *processor) {
+    processor->buffer[processor->index] = '\0';  // Завершаем строку
+    processor->callback(processor->buffer, processor->prefix);  // Вызываем колбэк
+    processor->index = 0;  // Сбрасываем индекс буфера
+}
+
 // Обработка данных
 void UARTProcessor_Process(UARTProcessor *processor) {
     if (!processor->uart || !processor->callback || !processor->buffer) {
@@ -49,18 +56,14 @@ void UARTProcessor_Process(UARTProcessor *processor) {
         char c = processor->uart->read();
         if (c == processor->lineEnding) {  // Если встретился символ конца строки
             if (processor->index > 0) {    // Проверяем, что буфер не пустой
-                processor->buffer[processor->index] = '\0';  // Завершаем строку
-                processor->callback(processor->buffer, processor->prefix);  // Вызываем колбэк
-                processor->index = 0;  // Сбрасываем индекс буфера
+                _processBuffer(processor);
             }
         } else {
             if (processor->index < processor->bufferSize - 1) {
                 processor->buffer[processor->index++] = c;  // Добавляем символ в буфер
             } else {
                 // Обработка переполнения буфера
-                processor->buffer[processor->index] = '\0';  // Завершаем строку
-                processor->callback(processor->buffer, "Buffer overflow!");  // Вызываем колбэк
-                processor->index = 0;  // Сбрасываем индекс буфера
+                _processBuffer(processor);
             }
         }
     }
